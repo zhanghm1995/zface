@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 class FaceAligner(object):
     def __init__(self):
-        self.lm3d_std = load_lm3d("./")
+        self.lm3d_std = load_lm3d("./BFM")
     
     def align_face(self, input_image, landmarks, mask=None):
         trans_params, img_new, lm_new, mask_new = \

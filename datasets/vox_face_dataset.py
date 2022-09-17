@@ -14,7 +14,7 @@ import os.path as osp
 import random
 import collections
 import numpy as np
-import cv2
+from tqdm import tqdm
 from scipy.io import loadmat
 from PIL import Image
 from omegaconf import OmegaConf
@@ -51,7 +51,7 @@ class VoxFaceDataset(Dataset):
         
         ## Get the number of frames in each video
         video_frame_length_dict = {}
-        for video_name in all_videos_name:
+        for video_name in tqdm(all_videos_name):
             meta_info_path = osp.join(data_dir, video_name, 'meta_info.yaml')
             meta_info = OmegaConf.load(meta_info_path)
             video_frame_length_dict[video_name] = int(meta_info.num_frames)
