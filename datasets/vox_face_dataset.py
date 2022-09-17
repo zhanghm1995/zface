@@ -19,18 +19,31 @@ from scipy.io import loadmat
 from PIL import Image
 from omegaconf import OmegaConf
 import torch
+import pickle
 from torch.utils.data import Dataset
 from torchvision import transforms
 from .preprocess import FaceAligner
 
 
 class VoxFaceDataset(Dataset):
-    def __init__(self, opt, is_inference):
+    def __init__(self, opt, is_inference, cache=True):
         self.data_root = osp.join(opt.path, "train") \
             if not is_inference else osp.join(opt.path, "test")
 
-        self.video_items, self.person_ids, self.idx_by_person_id, self.video_frame_length_dict = \
-            self._build_dataset(self.data_root)
+        # self.video_items, self.person_ids, self.idx_by_person_id, self.video_frame_length_dict = \
+        #     self._build_dataset(self.data_root)
+        
+        cache_path = osp.join(osp.dirname(opt.path), "vox1_cache.pkl")
+        if cache and osp.exists(cache_path):
+            with open(cache_path, "rb") as f:
+                data_info = pickle.load(f)
+        else:
+            data_info = self._build_dataset(self.data_root)
+            if cache:
+                with open(cache_path, "wb") as f:
+                    pickle.dump(data_info, f)
+        
+        self.video_items, self.person_ids, self.idx_by_person_id, self.video_frame_length_dict = data_info
 
         self.face_aligner = FaceAligner()
 
