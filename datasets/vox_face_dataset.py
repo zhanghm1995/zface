@@ -35,6 +35,7 @@ class VoxFaceDataset(Dataset):
         
         cache_path = osp.join(osp.dirname(opt.path), "vox1_cache.pkl")
         if cache and osp.exists(cache_path):
+            print("[INFO] Load the cache file from {}".format(cache_path))
             with open(cache_path, "rb") as f:
                 data_info = pickle.load(f)
         else:
@@ -110,7 +111,7 @@ class VoxFaceDataset(Dataset):
         ## Load the 3DMM parameters of target image
         face_3dmm_fp = osp.join(self.data_root, choose_video, "deep3dface", f"{frame_target:06d}.mat")
         face_3dmm = convert_3dmm(face_3dmm_fp)
-        data['target_semantics'] = face_3dmm
+        data['target_semantics'] = torch.FloatTensor(face_3dmm)
         return data
     
     def __len__(self):
