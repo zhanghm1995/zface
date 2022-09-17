@@ -232,13 +232,13 @@ def weight_init(m):
 class ShapeAwareIdentityExtractor(nn.Module):
     def __init__(self):
         super(ShapeAwareIdentityExtractor, self).__init__()
-        self.F_id = torch.jit.script(iresnet100(pretrained=False, fp16=True))
+        self.F_id = iresnet100(pretrained=False, fp16=False)
         self.F_id.load_state_dict(torch.load('./weights/backbone_r100.pth'))
         self.F_id.eval()
         
         for param in self.F_id.parameters():
             param.requires_grad = False
-        self.net_recon = torch.jit.script(ReconNet())
+        self.net_recon = ReconNet()
         self.net_recon.load_state_dict(torch.load('./weights/epoch_20.pth')['net_recon'])
         self.net_recon.eval()
         for param in self.net_recon.parameters():
