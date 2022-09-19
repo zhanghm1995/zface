@@ -163,6 +163,7 @@ class RealFaceModel(pl.LightningModule):
         gt_image = gt_full_image * target_mask
         
         # resize to (256, 256)
+        target_mask = F.interpolate(target_mask, size=256, mode='bilinear')
         gt_image = F.interpolate(gt_image, size=256, mode='bilinear')
 
         target_image = F.interpolate(target_rendered_face, size=256, mode='bilinear')

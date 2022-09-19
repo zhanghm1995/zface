@@ -46,14 +46,12 @@ class RealFaceLoss(LossInterface):
         self.W_seg = 100
         
         self.weights = torch.tensor([self.W_adv,self.W_shape,self.W_id,self.W_recon,self.W_cycle,self.W_lpips],device="cuda:0")
-        # self.batch_size = args["batch_size"]
 
     def get_loss_G(self, G_dict):
         # Adversarial loss
         if self.W_adv:
             # L_adv = Loss.get_BCE_loss(G_dict["d_adv"], True)
             L_adv = sum([dual_contrastive_loss(fake,real) for fake, real in zip(G_dict["d_fake"],G_dict["d_real"])])
-            # L_G += self.W_adv * L_adv
         
         # Reconstruction loss
         if self.W_recon:
@@ -62,7 +60,10 @@ class RealFaceLoss(LossInterface):
                                  F.interpolate(G_dict["I_gt"], scale_factor=0.25, mode='bilinear'))
         # LPIPS loss
         if self.W_lpips:
-            L_lpips = Loss.get_lpips_loss_with_same_person(G_dict["I_swapped_high"], G_dict["I_target"],G_dict["same_person"], self.batch_size)
+            batch_size = G_dict["I_swapped_high"].shape[0]
+            same_person = torch.ones((batch_size, 1)).to(G_dict["I_swapped_high"].device)
+            L_lpips = Loss.get_lpips_loss_with_same_person(
+                G_dict["I_swapped_high"], G_dict["I_gt"], same_person, batch_size)
 
         w = self.weights
         L_adv *=  w[0]

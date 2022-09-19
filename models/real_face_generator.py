@@ -350,11 +350,11 @@ class SemanticFacialFusionModule(nn.Module):
         self.apply(weight_init)
     
     
-    def forward(self, target_image,mask_high, z_enc, z_dec, id_vector):
-        mask_low = F.interpolate(mask_high, scale_factor=0.25,mode='bilinear')
+    def forward(self, target_image, mask_high, z_enc, z_dec, id_vector):
+        mask_low = F.interpolate(mask_high, scale_factor=0.25, mode='bilinear')
         z_fuse = mask_low * z_dec + (1 - mask_low) * z_enc
         z_fuse,i_low = self.z_fuse_block_n(z_fuse, id_vector)
-        _ , i_r = self.f_up_n(z_fuse,id_vector)
+        _ , i_r = self.f_up_n(z_fuse, id_vector)
         i_r = mask_high * i_r + (1 - mask_high) * target_image
         i_low = mask_low * i_low + (1 - mask_low) * F.interpolate(target_image, scale_factor=0.25,mode='bilinear')
         return i_r, i_low
@@ -364,9 +364,9 @@ class RealFaceGenerator(nn.Module):
     def __init__(self,activation='lrelu', size=256):
         super(RealFaceGenerator, self).__init__()
         self.SAIE = ShapeAwareIdentityExtractor()
-        self.SFFM = SemanticFacialFusionModule(activation=activation, style_dim=659)
+        self.SFFM = SemanticFacialFusionModule(activation=activation, style_dim=512)
         self.E = torch.jit.script(Encoder(activation=activation))
-        self.D = Decoder(activation=activation, style_dim=659)
+        self.D = Decoder(activation=activation, style_dim=512)
 
     @torch.no_grad()
     def inference(self,I_s,I_t,mask_high):
