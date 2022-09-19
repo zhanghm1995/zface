@@ -22,7 +22,8 @@ import pytorch_lightning as pl
 from torch_utils.ops import upfirdn2d
 from models.real_face_generator import RealFaceGenerator
 from models.discriminator import ProjectedDiscriminator
-from torch import nn
+from kornia import morphology as morph
+import cv2
 from dataset import *
 from losses.real_face_loss import RealFaceLoss
 from models.gradnorm import normalize_gradient
@@ -62,6 +63,10 @@ class RealFaceModel(pl.LightningModule):
 
         self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21))
+        kernel = torch.from_numpy(kernel)
+        self.kernel = kernel.to(torch.int64)
+
     def forward(self, I_source, I_target,mask):
         img = self.G(I_source, I_target,mask)[0]
         return img
@@ -89,45 +94,45 @@ class RealFaceModel(pl.LightningModule):
         opt_g, opt_d = self.optimizers(use_pl_optimizer=True)
         I_source, I_target, mask_target, I_gt = self._prepare_data(batch)
 
-        # I_swapped_high, I_swapped_low = self.G(I_source, I_target, mask_target)
+        I_swapped_high, I_swapped_low = self.G(I_source, I_target, mask_target)
 
-        # # adversarial
-        # fake_output = self.run_D(I_swapped_high)
-        # real_output = self.run_D(I_gt)
+        # adversarial
+        fake_output = self.run_D(I_swapped_high)
+        real_output = self.run_D(I_gt)
 
-        # G_dict = {
-        #     "I_gt": I_gt,
-        #     "I_swapped_high": I_swapped_high,
-        #     "I_swapped_low": I_swapped_low,
-        #     "mask_target": mask_target,
-        #     "d_fake": fake_output,
-        #     "d_real": real_output
-        # }
+        G_dict = {
+            "I_gt": I_gt,
+            "I_swapped_high": I_swapped_high,
+            "I_swapped_low": I_swapped_low,
+            "mask_target": mask_target,
+            "d_fake": fake_output,
+            "d_real": real_output
+        }
         
-        # g_loss = self.loss.get_loss_G(G_dict)
-        # opt_g.zero_grad(set_to_none=True)
-        # self.manual_backward(g_loss)
-        # opt_g.step()
+        g_loss = self.loss.get_loss_G(G_dict)
+        opt_g.zero_grad(set_to_none=True)
+        self.manual_backward(g_loss)
+        opt_g.step()
 
-        # ###########
-        # # train D #
-        # ###########
-        # I_gt.requires_grad_()
-        # d_true = self.run_D(I_gt)
-        # d_fake = self.run_D(I_swapped_high.detach())
+        ###########
+        # train D #
+        ###########
+        I_gt.requires_grad_()
+        d_true = self.run_D(I_gt)
+        d_fake = self.run_D(I_swapped_high.detach())
 
-        # D_dict = {
-        #     "d_true": d_true,
-        #     "d_fake": d_fake,
-        #     "I_gt": I_gt
-        # }
+        D_dict = {
+            "d_true": d_true,
+            "d_fake": d_fake,
+            "I_gt": I_gt
+        }
 
-        # d_loss = self.loss.get_loss_D(D_dict)
+        d_loss = self.loss.get_loss_D(D_dict)
         
-        # opt_d.zero_grad(set_to_none=True)
-        # self.manual_backward(d_loss)
-        # opt_d.step()
-        # self.log_dict(self.loss.loss_dict)
+        opt_d.zero_grad(set_to_none=True)
+        self.manual_backward(d_loss)
+        opt_d.step()
+        self.log_dict(self.loss.loss_dict)
 
         if batch_idx % 500 == 0:
             self.save_images(I_source, I_target, I_gt)
@@ -145,14 +150,14 @@ class RealFaceModel(pl.LightningModule):
         
         torchvision.utils.save_image(vis_images, save_path, nrow=10, padding=0, normalize=False)
 
-
     def _prepare_data(self, batch):
-        for key, value in batch.items():
-            print(key, value.shape, value.dtype)
+        self.kernel = self.kernel.to(self.device)
 
         target_semantics = batch['target_semantics']
         ## Rendering the target semantics
         target_rendered_face, target_mask, _ = self.face3dmm_renderer.forward(target_semantics.to(torch.float32))
+
+        target_mask = morph.closing(target_mask, self.kernel)
         
         gt_full_image = batch['gt_image'] # (B, 3, 224, 224)
         gt_image = gt_full_image * target_mask
