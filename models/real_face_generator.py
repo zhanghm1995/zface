@@ -361,7 +361,7 @@ class SemanticFacialFusionModule(nn.Module):
 
 
 class RealFaceGenerator(nn.Module):
-    def __init__(self,activation =  'lrelu', size = 256):
+    def __init__(self,activation='lrelu', size=256):
         super(RealFaceGenerator, self).__init__()
         self.SAIE = ShapeAwareIdentityExtractor()
         self.SFFM = SemanticFacialFusionModule(activation=activation, style_dim=659)

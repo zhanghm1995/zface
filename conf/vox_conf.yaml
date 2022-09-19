@@ -1,0 +1,33 @@
+
+image_size: 256
+latent_dim: 512
+activation: mish
+
+checkpoint_path: null
+
+dataset:
+  type: VoxFaceDataset
+  params:
+    data_dir: ./data/vox1_preprocessed
+    is_inference: False
+
+  dataloader_params:
+    batch_size: 16
+    shuffle: True
+    num_workers: 16
+    drop_last: True
+  
+optimizer:
+  params:
+    lr: 5.0e-05
+    betas:
+    - 0.5
+    - 0.999
+  lr_scheduler:
+    type: step
+    params:
+      step_size: 100000
+      gamma: 0.2
+  lr_scheduler_config:
+    interval: step # update the lr each step
+    monitor: False

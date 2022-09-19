@@ -26,14 +26,16 @@ from .preprocess import FaceAligner
 
 
 class VoxFaceDataset(Dataset):
-    def __init__(self, opt, is_inference, cache=True):
-        self.data_root = osp.join(opt.path, "train") \
-            if not is_inference else osp.join(opt.path, "test")
-
-        # self.video_items, self.person_ids, self.idx_by_person_id, self.video_frame_length_dict = \
-        #     self._build_dataset(self.data_root)
+    def __init__(
+        self, 
+        data_dir=None, 
+        is_inference=False, 
+        cache=True):
         
-        cache_path = osp.join(osp.dirname(opt.path), "vox1_cache.pkl")
+        self.data_root = osp.join(data_dir, "train") \
+            if not is_inference else osp.join(data_dir, "test")
+
+        cache_path = osp.join(osp.dirname(data_dir), "vox1_cache.pkl")
         if cache and osp.exists(cache_path):
             print("[INFO] Load the cache file from {}".format(cache_path))
             with open(cache_path, "rb") as f:
