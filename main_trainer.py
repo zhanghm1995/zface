@@ -51,7 +51,8 @@ if __name__ == '__main__':
             accelerator='gpu', 
             devices=1,
             precision=16,
-            callbacks=[checkpoint_callback],
-            max_epochs=50)
+            # callbacks=[checkpoint_callback],
+            max_epochs=50,
+            default_root_dir="work_dir/real_face_debug")
 
     trainer.fit(model, train_dataloader, ckpt_path=config.checkpoint_path)

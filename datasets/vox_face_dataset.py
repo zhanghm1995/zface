@@ -31,7 +31,7 @@ class VoxFaceDataset(Dataset):
         data_dir=None, 
         is_inference=False, 
         cache=True):
-        
+
         self.data_root = osp.join(data_dir, "train") \
             if not is_inference else osp.join(data_dir, "test")
 
@@ -48,10 +48,11 @@ class VoxFaceDataset(Dataset):
         
         self.video_items, self.person_ids, self.idx_by_person_id, self.video_frame_length_dict = data_info
 
+        self.person_ids = self.person_ids * 100
+
         self.face_aligner = FaceAligner()
 
         self.transform = transforms.Compose([
-                transforms.Resize((256,256)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
@@ -97,7 +98,7 @@ class VoxFaceDataset(Dataset):
         raw_source_lm[:, -1] = 256 - 1 - raw_source_lm[:, -1]
 
         _, source_image, _, _ = self.face_aligner.align_face(raw_reference_image, raw_source_lm)
-        data['source_image'] = self.transform(source_image)
+        data['reference_image'] = self.transform(source_image)
 
         ## =============== Load the target image ===============
         target_image_path = osp.join(video_images_dir, f"{frame_target:06d}.png")
@@ -108,12 +109,12 @@ class VoxFaceDataset(Dataset):
         raw_target_lm[:, -1] = 256 - 1 - raw_target_lm[:, -1]
 
         _, target_image, _, _ = self.face_aligner.align_face(raw_target_image, raw_target_lm)
-        data['target_image'] = self.transform(target_image)
+        data['gt_image'] = self.transform(target_image)
 
         ## Load the 3DMM parameters of target image
         face_3dmm_fp = osp.join(self.data_root, choose_video, "deep3dface", f"{frame_target:06d}.mat")
         face_3dmm = convert_3dmm(face_3dmm_fp)
-        data['target_semantics'] = torch.FloatTensor(face_3dmm)
+        data['target_semantics'] = torch.FloatTensor(face_3dmm.reshape(-1))
         return data
     
     def __len__(self):

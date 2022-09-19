@@ -57,9 +57,9 @@ class RealFaceLoss(LossInterface):
         
         # Reconstruction loss
         if self.W_recon:
-            L_recon = F.l1_loss(G_dict["I_swapped_high"], G_dict["I_target"])
+            L_recon = F.l1_loss(G_dict["I_swapped_high"], G_dict["I_gt"])
             L_recon += F.l1_loss(G_dict["I_swapped_low"], 
-                                 F.interpolate(G_dict["I_target"], scale_factor=0.25, mode='bilinear'))
+                                 F.interpolate(G_dict["I_gt"], scale_factor=0.25, mode='bilinear'))
         # LPIPS loss
         if self.W_lpips:
             L_lpips = Loss.get_lpips_loss_with_same_person(G_dict["I_swapped_high"], G_dict["I_target"],G_dict["same_person"], self.batch_size)
@@ -81,16 +81,3 @@ class RealFaceLoss(LossInterface):
         L_D = sum([dual_contrastive_loss(real,fake) for real,fake in zip(D_dict["d_true"],D_dict["d_fake"])])
         self.loss_dict["L_D"] = round(L_D.item(), 4)
         return L_D    
-
-    # def get_loss_D(self, D_dict):
-    #     L_true = Loss.get_BCE_loss(D_dict["d_true"], True)
-    #     L_fake = Loss.get_BCE_loss(D_dict["d_fake"], False)
-    #     L_reg = Loss.get_r1_reg(D_dict["d_true"], D_dict["I_target"])
-    #     L_D = L_true + L_fake + L_reg
-
-        
-    #     self.loss_dict["L_D"] = round(L_D.item(), 4)
-    #     self.loss_dict["L_true"] = round(L_true.mean().item(), 4)
-    #     self.loss_dict["L_fake"] = round(L_fake.mean().item(), 4)
-
-    #     return L_D

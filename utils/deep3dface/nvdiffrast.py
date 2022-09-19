@@ -71,6 +71,7 @@ class MeshRenderer(nn.Module):
 
         # for range_mode vetex: [B*N, 4], tri: [B*M, 3], for instance_mode vetex: [B, N, 4], tri: [M, 3]
         tri = tri.type(torch.int32).contiguous()
+        vertex_ndc = vertex_ndc.to(torch.float32)
         rast_out, _ = dr.rasterize(self.glctx, vertex_ndc.contiguous(), tri, resolution=[rsize, rsize], ranges=ranges)
 
         depth, _ = dr.interpolate(vertex.reshape([-1,4])[...,2].unsqueeze(1).contiguous(), rast_out, tri) 

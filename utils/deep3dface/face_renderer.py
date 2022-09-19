@@ -8,13 +8,16 @@ Description: The 3DMM face renderer.
 '''
 
 import numpy as np
+import torch.nn as nn
 
 from .bfm import ParametricFaceModel
 from .nvdiffrast import MeshRenderer
 
 
-class Face3DMMRenderer(object):
+class Face3DMMRenderer(nn.Module):
     def __init__(self):
+        super().__init__()
+
         self.face_model = ParametricFaceModel(bfm_folder='./BFM')
         
         fov = 2 * np.arctan(112.0 / 1015.0) * 180 / np.pi
@@ -27,7 +30,7 @@ class Face3DMMRenderer(object):
 
         pred_vertex, pred_tex, pred_color, pred_lm = \
             self.face_model.compute_for_render(coeff[:, :257])
-
+        print(pred_vertex.dtype)
         pred_mask, _, pred_face = self.renderer(
             pred_vertex, self.face_model.face_buf, feat=pred_color)
         
